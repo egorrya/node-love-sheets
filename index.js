@@ -1,6 +1,9 @@
+const express = require('express');
+const app = express();
+const port = process.env.PORT || 3000;
+
 require('dotenv').config();
 const { GoogleSpreadsheet } = require('google-spreadsheet');
-const schedule = require('node-schedule');
 const loveQuotes = require('./quotes'); // load love quotes from another file
 
 // Initialize the Google Spreadsheet by its ID (from the environment variables)
@@ -18,7 +21,6 @@ async function accessSpreadsheet() {
 	});
 	await doc.loadInfo();
 
-	console.log(`Welcome, Space Cowboy!`);
 	console.log(`Working on the table - ${doc.title}`);
 
 	// Access the original sheet
@@ -66,8 +68,27 @@ async function accessSpreadsheet() {
 	);
 }
 
-// Schedule the job to run 3 times a day
-schedule.scheduleJob('0 8,14,20 * * *', accessSpreadsheet);
+app.get('/', async (req, res) => {
+	try {
+		res.status(200).json({ message: 'Welcome, Space Cowboy!' });
+	} catch (error) {
+		console.error(error);
+		res.status(500).json({ error: 'An error occurred.' });
+	}
+});
 
-// Run the function immediately on start
-accessSpreadsheet().catch(console.error);
+app.get('/make-sign', async (req, res) => {
+	try {
+		await accessSpreadsheet();
+		res.status(200).json({ message: 'Quote added successfully!' });
+	} catch (error) {
+		console.error(error);
+		res
+			.status(500)
+			.json({ error: 'An error occurred while adding the quote.' });
+	}
+});
+
+app.listen(port, () => {
+	console.log(`Server is running on port ${port}`);
+});
