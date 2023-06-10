@@ -1,12 +1,8 @@
-require('dotenv').config();
-
 const express = require('express');
-const serverless = require('serverless-http');
-
 const app = express();
 const port = process.env.PORT || 3000;
-const router = express.Router();
 
+require('dotenv').config();
 const { GoogleSpreadsheet } = require('google-spreadsheet');
 const loveQuotes = require('./quotes'); // load love quotes from another file
 
@@ -21,9 +17,7 @@ function getRandomQuote() {
 async function accessSpreadsheet() {
 	await doc.useServiceAccountAuth({
 		client_email: process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL,
-		private_key: process.env.GOOGLE_PRIVATE_KEY.split(String.raw`\n`).join(
-			'\n'
-		),
+		private_key: process.env.GOOGLE_PRIVATE_KEY.replace(/\\n/g, '\n'),
 	});
 	await doc.loadInfo();
 
@@ -74,16 +68,19 @@ async function accessSpreadsheet() {
 	);
 }
 
-router.get('/', async (req, res) => {
+app.get('/', async (req, res) => {
 	try {
+		await accessSpreadsheet();
 		res.status(200).json({ message: 'Welcome, Space Cowboy!' });
 	} catch (error) {
 		console.error(error);
-		res.status(500).json({ error: 'An error occurred.' });
+		res
+			.status(500)
+			.json({ error: 'An error occurred while adding the quote.' });
 	}
 });
 
-router.get('/make-sign', async (req, res) => {
+app.get('/make-sign', async (req, res) => {
 	try {
 		await accessSpreadsheet();
 		res.status(200).json({ message: 'Quote added successfully!' });
@@ -95,5 +92,6 @@ router.get('/make-sign', async (req, res) => {
 	}
 });
 
-app.use('/.netlify/functions/api', router);
-module.exports.handler = serverless(app);
+app.listen(port, () => {
+	console.log(`Server is running on port ${port}`);
+});
