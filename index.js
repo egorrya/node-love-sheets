@@ -1,12 +1,5 @@
 require('dotenv').config();
 
-// Unset NODE_OPTIONS variable
-process.env.NODE_OPTIONS = undefined;
-delete process.env.NODE_OPTIONS;
-
-// Set NODE_OPTIONS to use the legacy OpenSSL provider
-process.env.NODE_OPTIONS = '--openssl-legacy-provider';
-
 const express = require('express');
 const app = express();
 const port = process.env.PORT || 3000;
