@@ -1,8 +1,11 @@
 require('dotenv').config();
 
 const express = require('express');
+const serverless = require('serverless-http');
+
 const app = express();
 const port = process.env.PORT || 3000;
+const router = express.Router();
 
 const { GoogleSpreadsheet } = require('google-spreadsheet');
 const loveQuotes = require('./quotes'); // load love quotes from another file
@@ -71,7 +74,7 @@ async function accessSpreadsheet() {
 	);
 }
 
-app.get('/', async (req, res) => {
+router.get('/', async (req, res) => {
 	try {
 		res.status(200).json({ message: 'Welcome, Space Cowboy!' });
 	} catch (error) {
@@ -80,7 +83,7 @@ app.get('/', async (req, res) => {
 	}
 });
 
-app.get('/make-sign', async (req, res) => {
+router.get('/make-sign', async (req, res) => {
 	try {
 		await accessSpreadsheet();
 		res.status(200).json({ message: 'Quote added successfully!' });
@@ -92,6 +95,5 @@ app.get('/make-sign', async (req, res) => {
 	}
 });
 
-app.listen(port, () => {
-	console.log(`Server is running on port ${port}`);
-});
+app.use('/.netlify/functions/api', router);
+module.exports.handler = serverless(app);
